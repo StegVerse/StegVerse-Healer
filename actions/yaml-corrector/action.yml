@@ -1,0 +1,31 @@
+name: "YAML Corrector"
+description: "Normalize/fix GitHub Workflows (actionlint + yamllint + ruamel.yaml)"
+runs:
+  using: "composite"
+  steps:
+    - name: Install tools
+      shell: bash
+      run: |
+        set -e
+        python3 -m pip install --upgrade pip
+        pip install ruamel.yaml yamllint
+        curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash
+
+    - name: Apply fixes
+      shell: bash
+      run: |
+        set -e
+        mkdir -p self_healing_out
+        WF_DIR=".github/workflows"
+        echo "# YAML Corrector Report" > self_healing_out/YAML_CORRECTOR_REPORT.md
+        if [ -d "$WF_DIR" ]; then
+          ./actionlint -color -shellcheck= || true
+          yamllint -f parsable "$WF_DIR" || true
+          # Light-touch normalize: ensure newline at EOF in each workflow
+          find "$WF_DIR" -type f -name "*.y*ml" -print0 | while IFS= read -r -d '' f; do
+            perl -0777 -pe 'END{print "\n" unless /\n\z/}' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+          done
+          echo "- Ran actionlint + yamllint + newline normalize" >> self_healing_out/YAML_CORRECTOR_REPORT.md
+        else
+          echo "- No .github/workflows directory found" >> self_healing_out/YAML_CORRECTOR_REPORT.md
+        fi
