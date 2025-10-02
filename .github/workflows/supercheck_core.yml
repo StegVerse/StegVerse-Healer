@@ -46,7 +46,7 @@ jobs:
 
       # --- YAML correction (composite action in this repo) ---
       - name: YAML Corrector
-        uses: StegVerse/stegverse-healer/actions/yaml-corrector@v1
+        uses: StegVerse/StegVerse-Healer/.github/actions/yaml-corrector@main
 
       # --- Optional: run local scripts if present ---
       - name: Repo Inventory & Drift (if scripts exist)
